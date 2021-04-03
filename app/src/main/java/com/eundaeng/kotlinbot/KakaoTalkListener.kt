@@ -17,24 +17,29 @@ import java.util.*
 
 /**
  * Created by Dark Tornado on 2018-01-17.
- * Last Edited by EunDaeng on 2021-04-02.
+ * Last Edited by EunDaeng on 2021-04-03.
  */
 class KakaoTalkListener : NotificationListenerService() {
     companion object{
-        var switchOn = false
+        var switchOn = KakaoBot.readData("botOn").toBoolean()
     }
     internal var preChat = HashMap<String?, String>()
 
     override fun onCreate() {
         super.onCreate()
         notificationBuilder()
-        Toast.makeText(this, "카카오톡 봇이 알림에 접근하기 시작합니다.", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "카카오톡 봇이 알림에 접근하기 시작합니다.", Toast.LENGTH_SHORT - 1500).show()
+        CoroutineScope(Dispatchers.IO).launch {
+            Kaling.init("javascript key")
+            Kaling.login("email@email.com", "password")
+        }
+        Toast.makeText(this, "카링 로그인 성공", Toast.LENGTH_SHORT - 1500).show()
     }
 
     override fun onDestroy() {
         super.onDestroy()
         preChat.clear()
-        Toast.makeText(this, "카카오톡 봇이 알림에 접근하는 것이 정지되었습니다.", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "카카오톡 봇이 알림에 접근하는 것이 정지되었습니다.", Toast.LENGTH_SHORT - 1500).show()
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
@@ -59,8 +64,8 @@ class KakaoTalkListener : NotificationListenerService() {
                             var isGroupChat: Boolean
                             if (Build.VERSION.SDK_INT > 23) {
                                 room = data.getString("android.summaryText")
-                                isGroupChat = room != null
                                 sender = data.get("android.title")!!.toString()
+                                isGroupChat = room != null
                                 msg = data.get("android.text")!!.toString()
                             } else {
                                 room = data.getString("android.subText")
@@ -70,9 +75,9 @@ class KakaoTalkListener : NotificationListenerService() {
                             }
                             if (room == null) room = sender
                             chatHook(
-                                sender.toString(),
-                                msg!!.trim { it <= ' ' },
                                 room.toString(),
+                                msg!!.trim { it <= ' ' },
+                                sender.toString(),
                                 isGroupChat,
                                 act
                             )
@@ -115,8 +120,8 @@ class KakaoTalkListener : NotificationListenerService() {
                 var a = Math.floor(Math.random() * 100)
                 replier.reply(a)
             }
-            if (msg == "&읽씹"){
-                replier.markAsRead()
+            if (msg == "&테스트"){
+                replier.reply("방: $room\n보낸사람: $sender\n단체채팅: $isGroupChat")
             }
             if (msg.startsWith("&주식 ")) {
                 CoroutineScope(Dispatchers.IO).launch {
@@ -130,8 +135,6 @@ class KakaoTalkListener : NotificationListenerService() {
             }
             if(msg.equals("&카링")){
                 CoroutineScope(Dispatchers.IO).launch {
-                    Kaling.init("javascript key")
-                    Kaling.login("youremail@email.com", "password")
                     Kaling.send(room!!, """{
 "link_ver": "4.0",
 "template_id": 12345,

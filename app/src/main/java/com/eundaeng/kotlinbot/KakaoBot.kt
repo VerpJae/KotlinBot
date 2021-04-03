@@ -2,6 +2,7 @@ package com.eundaeng.kotlinbot
 
 import android.app.Application
 import android.content.Context
+import android.os.Build
 import android.os.Environment
 import android.widget.Toast
 import kotlinx.coroutines.delay
@@ -25,22 +26,10 @@ class KakaoBot : Application() {
         val VERSION = "1.0"
         var ctx: Context? = null
 
-        fun readData(name: String): String? {
+        fun readData(name: String): String {
             try {
-                val file = File("$sdcard/KakaoBot/$name.txt")
-                if (!file.exists()) return null
-                val fis = FileInputStream(file)
-                val isr = InputStreamReader(fis)
-                val br = BufferedReader(isr)
-                var str = br.readLine()
-                var line = ""
-                while (br.readLine() != null) {
-                    line = br.readLine()
-                    str += "\n" + line
-                }
-                fis.close()
-                isr.close()
-                br.close()
+                val file = "$sdcard/KakaoBot/$name.txt"
+                val str = loadFromExternalStorage(file)
                 return str
             } catch (e: Exception) {
                 //toast(e.toString());
@@ -51,10 +40,8 @@ class KakaoBot : Application() {
 
         fun saveData(name: String, value: String) {
             try {
-                val file = File("$sdcard/KakaoBot/$name.txt")
-                val fos = FileOutputStream(file)
-                fos.write(value.toByteArray())
-                fos.close()
+                val file ="$sdcard/KakaoBot/$name.txt"
+                saveToExternalStorage(value, file)
             } catch (e: Exception) {
                 //toast(e.toString());
             }
@@ -73,6 +60,22 @@ class KakaoBot : Application() {
 
         private fun toast(msg: String) {
             Toast.makeText(ctx, msg, Toast.LENGTH_LONG).show()
+        }
+        private fun getAppDataFileFromExternalStorage(filename: String) : File{
+            //kitkat버전부터는
+            val dir = File(filename)
+
+            // 디렉토리없으면 만듦
+            dir?.mkdirs()
+            return File("$filename")
+        }
+        private fun saveToExternalStorage(text: String, filename: String){
+            val fileOutputStream = FileOutputStream(getAppDataFileFromExternalStorage(filename))
+            fileOutputStream.write(text.toByteArray())
+            fileOutputStream.close()
+        }
+        private fun loadFromExternalStorage(filename: String) :String {
+            return FileInputStream(getAppDataFileFromExternalStorage(filename)).reader().readText()
         }
 
     }

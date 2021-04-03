@@ -18,6 +18,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import java.io.File
+import java.io.FileOutputStream
 
 
 class MainActivity : AppCompatActivity() {
@@ -100,29 +101,18 @@ class MainActivity : AppCompatActivity() {
             }
             checkES()
             val btn = findViewById<Button>(R.id.button)
-            btn.setOnClickListener{
-                try{
-                    checkES()
-                    val intent = Intent(this, KakaoTalkListener::class.java)
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        stopService(intent)
-                        startForegroundService(intent)
-                    } else {
-                        stopService(intent)
-                        startService(intent)
-                    }
-                    Toast.makeText(this,"restart service", Toast.LENGTH_SHORT).show()
-                }
-                catch(e: Exception){
-                    Toast.makeText(this,"restart error", Toast.LENGTH_SHORT).show()
-                }
+            btn.setOnClickListener {
+                finishAffinity()
+                val intent = Intent(this, MainActivity::class.java)
+                startActivity(intent)
+                System.exit(0)
+                Toast.makeText(applicationContext, "재시작", Toast.LENGTH_LONG).show()
             }
 
             val on = findViewById<Switch>(R.id.switch1)
-            on.isChecked = false;
-            KakaoTalkListener.switchOn = false
+            on.isChecked = KakaoBot.readData("botOn").toBoolean()
                 on.setOnCheckedChangeListener { swit, onoff ->
-                    //KakaoBot.saveData("botOn", onoff.toString())
+                    KakaoBot.saveData("botOn", onoff.toString())
                     if (onoff) {
                         toast("카카오톡 봇이 활성화되었습니다.")
                         KakaoTalkListener.switchOn = true
