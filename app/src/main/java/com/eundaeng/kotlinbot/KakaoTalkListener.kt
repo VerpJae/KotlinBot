@@ -7,13 +7,16 @@ import android.os.Build
 import android.os.Bundle
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import android.widget.Switch
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.NotificationCompat
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jsoup.Jsoup
 import java.util.*
+
 
 /**
  * Created by Dark Tornado on 2018-01-17.
@@ -24,7 +27,7 @@ class KakaoTalkListener : NotificationListenerService() {
         var switchOn = KakaoBot.readData("botOn").toBoolean()
     }
     internal var preChat = HashMap<String?, String>()
-
+    var sesMap = mutableMapOf<String, Notification.Action>()
     override fun onCreate() {
         super.onCreate()
         notificationBuilder()
@@ -74,6 +77,7 @@ class KakaoTalkListener : NotificationListenerService() {
                                 isGroupChat = room != null
                             }
                             if (room == null) room = sender
+                            sesMap[room!!] = act
                             chatHook(
                                 room.toString(),
                                 msg!!.trim { it <= ' ' },
@@ -121,7 +125,7 @@ class KakaoTalkListener : NotificationListenerService() {
                 replier.reply(a)
             }
             if (msg == "&테스트"){
-                replier.reply("방: $room\n보낸사람: $sender\n단체채팅: $isGroupChat")
+                replier.reply(room!!, "방: $room\n보낸사람: $sender\n단체채팅: $isGroupChat")
             }
             if (msg.startsWith("&주식 ")) {
                 CoroutineScope(Dispatchers.IO).launch {
@@ -175,6 +179,23 @@ class KakaoTalkListener : NotificationListenerService() {
 
     }
 
+    //replier.reply(room, msg)
+    private fun Notification.Action.reply(room: String, value: Any?) {
+        val sendIntent = Intent()
+        val msg = Bundle()
+        val session = sesMap[room]
+        for (inputable in session!!.remoteInputs) msg.putCharSequence(inputable.resultKey, value.toString())
+        RemoteInput.addResultsToIntent(session.remoteInputs, sendIntent, msg)
+
+        try {
+            session.actionIntent.send(this@KakaoTalkListener, 0, sendIntent)
+            toast("<자동응답 실행됨>")
+        } catch (e: PendingIntent.CanceledException) {
+
+        }
+
+    }
+    //replier.reply(msg)
     private fun Notification.Action.reply(value: Any?) {
         val sendIntent = Intent()
         val msg = Bundle()
@@ -189,6 +210,37 @@ class KakaoTalkListener : NotificationListenerService() {
         }
 
     }
+    //replier.send(room, msg)  Bot.send(room, msg)
+    private fun Notification.Action.send(room: String, value: Any?) {
+        val sendIntent = Intent()
+        val msg = Bundle()
+        val session = sesMap[room]
+        for (inputable in session!!.remoteInputs) msg.putCharSequence(inputable.resultKey, value.toString())
+        RemoteInput.addResultsToIntent(session.remoteInputs, sendIntent, msg)
+
+        try {
+            session.actionIntent.send(this@KakaoTalkListener, 0, sendIntent)
+            toast("<자동응답 실행됨>")
+        } catch (e: PendingIntent.CanceledException) {
+
+        }
+    }
+    //replier.send(msg)  Bot.send(msg)
+    private fun Notification.Action.send(value: Any?) {
+        val sendIntent = Intent()
+        val msg = Bundle()
+        for (inputable in remoteInputs) msg.putCharSequence(inputable.resultKey, value.toString())
+        RemoteInput.addResultsToIntent(remoteInputs, sendIntent, msg)
+
+        try {
+            actionIntent.send(this@KakaoTalkListener, 0, sendIntent)
+            toast("<자동응답 실행됨>")
+        } catch (e: PendingIntent.CanceledException) {
+
+        }
+
+    }
+
     private fun Notification.Action.markAsRead() {
         val sendIntent = Intent()
         val msg = Bundle()
