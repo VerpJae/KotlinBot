@@ -20,8 +20,9 @@ import java.util.*
 
 /**
  * Created by Dark Tornado on 2018-01-17.
- * Last Edited by EunDaeng on 2021-04-03.
+ * Last Edit by EunDaeng on 2021-07-10.
  */
+
 class KakaoTalkListener : NotificationListenerService() {
     companion object{
         var switchOn = KakaoBot.readData("botOn").toBoolean()
@@ -135,17 +136,6 @@ class KakaoTalkListener : NotificationListenerService() {
                             .get().select("g-card-section").get(0).select("span[jsname=vWLAgc]")
                             .text()
                     replier.reply(fr)
-                }
-            }
-            if(msg.equals("&카링")){
-                CoroutineScope(Dispatchers.IO).launch {
-                    Kaling.send(room!!, """{
-"link_ver": "4.0",
-"template_id": 12345,
-"template_args": {}
-}""", "custom"
-                    )
-                    replier.reply("성공")
                 }
             }
         }catch(e: Exception){showDialog("봇 에러", e.message)}
